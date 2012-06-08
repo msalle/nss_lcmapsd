@@ -14,7 +14,16 @@ AC_PROG_LIBTOOL
 
 AC_CHECK_LIB([curl],[curl_easy_init])
 
+AC_CHECK_HEADERS([nss.h])
+
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_HEADERS([nss_lcmapsd_config.h])
+
+if test -d "/lib64" ; then
+    NSSMODDIR=/lib64
+else
+    NSSMODDIR=$libdir
+fi
+AC_SUBST(NSSMODDIR)
 
 AC_OUTPUT

@@ -11,6 +11,9 @@
 
 #include <curl/curl.h>
 
+#define LCMAPSD_URL	"http://localhost:8008/lcmaps/mapping/rest"
+#define LCMAPSD_TIMEOUT	3L
+
 /* Used as buffer space by _curl_memwrite */
 struct MemoryStruct {
     char *memory;
@@ -65,7 +68,7 @@ static enum nss_status
 _lcmapsd_curl(const char *name, uid_t *uid)	{
     CURL *curl_handle;
     struct MemoryStruct chunk;
-    char *base_url="http://localhost:8008/lcmaps/mapping/rest?format=json&subjectdn=";
+    char *base_url=LCMAPSD_URL "?format=json&subjectdn=";
     char *lcmapsd_url=NULL,*name_encoded=NULL;
     int rc,len=strlen(base_url);
     long httpresp;
@@ -98,6 +101,8 @@ _lcmapsd_curl(const char *name, uid_t *uid)	{
     curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, _curl_memwrite);
     curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
     curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+    /* Timeout */
+    curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, LCMAPSD_TIMEOUT);
 
     /* Do lookup */
     curl_easy_perform(curl_handle);
