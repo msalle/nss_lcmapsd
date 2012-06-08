@@ -13,11 +13,7 @@
 # limitations under the License.
 #
 # Authors:
-# 2011-
-#     Dennis van Dok <dennisvd@nikhef.nl>
-#     Oscar Koeroo <okoeroo@nikhef.nl>
 #     Mischa Sall\'e <msalle@nikhef.nl>
-#     NIKHEF Amsterdam, the Netherlands
 #
 
 set -x

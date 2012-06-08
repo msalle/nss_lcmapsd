@@ -1,4 +1,5 @@
 #include <nss.h>
+
 #include <pwd.h>
 #include <errno.h>
 
@@ -10,16 +11,15 @@
 
 #include <curl/curl.h>
 
-#if 1
-#include <syslog.h>
-#endif
-
+/* Used as buffer space by _curl_memwrite */
 struct MemoryStruct {
     char *memory;
     size_t size;
 };
 
-/* see cURL getinmemory.c example */
+/**
+ * see cURL getinmemory.c example
+ */
 static size_t
 _curl_memwrite(void *contents, size_t size, size_t nmemb, void *userp) {
     size_t realsize = size * nmemb;
@@ -36,7 +36,8 @@ _curl_memwrite(void *contents, size_t size, size_t nmemb, void *userp) {
     return realsize;
 }
 
-/* Parses memory as lcmapsd json looking
+/**
+ * Parses memory as lcmapsd json. Looks for a valid uid.
  * \return 1 when uid is found, otherwise 0
  */
 static int _lcmapsd_parse_json(char *memory, uid_t *uid)    {
@@ -54,7 +55,12 @@ static int _lcmapsd_parse_json(char *memory, uid_t *uid)    {
 	return 0;
 }
 
-
+/**
+ * Does a callout to a lcmapsd, currently hardcoded to localhost for given name
+ * \param name input DN
+ * \param uid resulting uid
+ * \return nss_status
+ */ 
 static enum nss_status
 _lcmapsd_curl(const char *name, uid_t *uid)	{
     CURL *curl_handle;
@@ -133,7 +139,9 @@ _curl_cleanup:
     return rc;
 }
 
-/* Actual nss lookup function */
+/**
+ * Actual nss lookup function trying to do a mapping via a lcmapsd
+ */
 enum nss_status
 _nss_lcmapsd_getpwnam_r (const char *name, struct passwd *result, char *buffer,
                        size_t buflen, int *errnop)  {
@@ -176,6 +184,10 @@ _nss_lcmapsd_getpwnam_r (const char *name, struct passwd *result, char *buffer,
 }
 
 #ifdef MAKE_A_OUT
+/**
+ * Test main function, to check whether a valid uid can be obtained via the
+ * lcmapsd
+ */
 int main(int argc, char *argv[])	{
     uid_t uid;
     int rc;
