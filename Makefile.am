@@ -15,8 +15,7 @@
 #
 
 # Library
-nssmoddir = @NSSMODDIR@
-nssmod_LTLIBRARIES = libnss_lcmapsd.la
+lib_LTLIBRARIES = libnss_lcmapsd.la
 libnss_lcmapsd_la_LDFLAGS = -version-info 2
 libnss_lcmapsd_la_SOURCES = nss_lcmapsd.c
 
