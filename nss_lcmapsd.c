@@ -1,3 +1,5 @@
+#include "nss_lcmapsd_config.h"
+
 #include <nss.h>
 
 #include <pwd.h>
