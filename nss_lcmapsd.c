@@ -1,4 +1,4 @@
-#include "nss_lcmapsd_config.h"
+#include "nss_lcmapsd.h"
 
 #include <nss.h>
 
@@ -13,8 +13,6 @@
 
 #include <curl/curl.h>
 
-#define LCMAPSD_URL	"http://localhost:8008/lcmaps/mapping/rest"
-#define LCMAPSD_TIMEOUT	3L
 
 /* Used as buffer space by _curl_memwrite */
 struct MemoryStruct {
@@ -67,13 +65,15 @@ static int _lcmapsd_parse_json(char *memory, uid_t *uid)    {
  * \return nss_status
  */ 
 static enum nss_status
-_lcmapsd_curl(const char *name, uid_t *uid)	{
+_lcmapsd_curl(lcmapsd_opts_t *opts, const char *name, uid_t *uid)	{
     CURL *curl_handle;
     struct MemoryStruct chunk;
-    char *base_url=LCMAPSD_URL "?format=json&subjectdn=";
+    char *extra_url="?format=json&subjectdn=";
     char *lcmapsd_url=NULL,*name_encoded=NULL;
-    int rc,len=strlen(base_url);
+    int rc,len=strlen(extra_url);
     long httpresp;
+
+    if (opts->lcmapsd_url==NULL) return NSS_STATUS_UNAVAIL;
 
     /* Initialize size of chunk */
     chunk.size=0;
@@ -89,14 +89,14 @@ _lcmapsd_curl(const char *name, uid_t *uid)	{
 	rc=NSS_STATUS_TRYAGAIN;
 	goto _curl_cleanup;
     }
-    len+=strlen(name_encoded)+1;
+    len+=strlen(opts->lcmapsd_url)+strlen(name_encoded)+1;
     if ( (lcmapsd_url=(char*)malloc(len)) == NULL)  {
 	rc=NSS_STATUS_TRYAGAIN;
 	goto _curl_cleanup;
     }
 
     /* Create the full url, we know it fits as we prepared the length */
-    snprintf(lcmapsd_url,len,"%s%s",base_url,name_encoded);
+    snprintf(lcmapsd_url,len,"%s%s%s",opts->lcmapsd_url,extra_url,name_encoded);
 
     /* Set curl options */
     curl_easy_setopt(curl_handle, CURLOPT_URL, lcmapsd_url);
@@ -104,7 +104,7 @@ _lcmapsd_curl(const char *name, uid_t *uid)	{
     curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
     curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
     /* Timeout */
-    curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, LCMAPSD_TIMEOUT);
+    curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, opts->lcmapsd_timeout);
 
     /* Do lookup */
     curl_easy_perform(curl_handle);
@@ -156,8 +156,12 @@ _nss_lcmapsd_getpwnam_r (const char *name, struct passwd *result, char *buffer,
     struct passwd *respointer=NULL;
     enum nss_status rc;
     uid_t uid;
+    lcmapsd_opts_t opts;
 
-    if ( (rc=_lcmapsd_curl(name,&uid)==NSS_STATUS_SUCCESS) )	{
+    if (_nss_lcmapsd_parse_config(&opts))
+	return NSS_STATUS_UNAVAIL;
+
+    if ( (rc=_lcmapsd_curl(&opts,name,&uid)==NSS_STATUS_SUCCESS) )	{
 	/* We got a valid result, now get the pw information for it */
 	if (getpwuid_r(uid, result, buffer, buflen, &respointer)==0)
 	    rc=NSS_STATUS_SUCCESS;
@@ -196,6 +200,7 @@ _nss_lcmapsd_getpwnam_r (const char *name, struct passwd *result, char *buffer,
  * lcmapsd
  */
 int main(int argc, char *argv[])	{
+    lcmapsd_opts_t opts;
     uid_t uid;
     int rc;
     char *dn;
@@ -205,7 +210,8 @@ int main(int argc, char *argv[])	{
 	return 1;
     }
     dn=argv[1];
-    rc=_lcmapsd_curl(dn,&uid);
+    if ( (rc=_nss_lcmapsd_parse_config(&opts))==0)
+	rc=_lcmapsd_curl(&opts,dn,&uid);
 
     switch(rc)	{
 	case NSS_STATUS_SUCCESS:

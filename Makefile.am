@@ -17,9 +17,9 @@
 # Library
 lib_LTLIBRARIES = libnss_lcmapsd.la
 libnss_lcmapsd_la_LDFLAGS = -version-info 2
-libnss_lcmapsd_la_SOURCES = nss_lcmapsd.c
+libnss_lcmapsd_la_SOURCES = nss_lcmapsd.c nss_lcmapsd.h nss_lcmapsd_conf.c
 
 # Test program
 bin_PROGRAMS = nss_lcmapsd_test
 nss_lcmapsd_test_CFLAGS = -DMAKE_A_OUT
-nss_lcmapsd_test_SOURCES = nss_lcmapsd.c
+nss_lcmapsd_test_SOURCES = nss_lcmapsd.c nss_lcmapsd.h nss_lcmapsd_conf.c
