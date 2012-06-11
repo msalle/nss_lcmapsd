@@ -158,10 +158,10 @@ _nss_lcmapsd_getpwnam_r (const char *name, struct passwd *result, char *buffer,
     uid_t uid;
     lcmapsd_opts_t opts;
 
+    opts.lcmapsd_conffile=strdup(NSS_LCMAPSD_CONF);
     if (_nss_lcmapsd_parse_config(&opts))
-	return NSS_STATUS_UNAVAIL;
-
-    if ( (rc=_lcmapsd_curl(&opts,name,&uid)==NSS_STATUS_SUCCESS) )	{
+	rc=NSS_STATUS_UNAVAIL;
+    else if ( (rc=_lcmapsd_curl(&opts,name,&uid)==NSS_STATUS_SUCCESS) )	{
 	/* We got a valid result, now get the pw information for it */
 	if (getpwuid_r(uid, result, buffer, buflen, &respointer)==0)
 	    rc=NSS_STATUS_SUCCESS;
@@ -191,6 +191,8 @@ _nss_lcmapsd_getpwnam_r (const char *name, struct passwd *result, char *buffer,
 	    }
 	}
     }
+
+    _nss_lcmapsd_config_free(&opts);
     return rc;
 }
 
@@ -210,7 +212,11 @@ int main(int argc, char *argv[])	{
 	return 1;
     }
     dn=argv[1];
-    if ( (rc=_nss_lcmapsd_parse_config(&opts))==0)
+
+    opts.lcmapsd_conffile=strdup(NSS_LCMAPSD_CONF);
+    if (_nss_lcmapsd_parse_config(&opts))
+	rc=NSS_STATUS_UNAVAIL;
+    else
 	rc=_lcmapsd_curl(&opts,dn,&uid);
 
     switch(rc)	{
@@ -234,6 +240,8 @@ int main(int argc, char *argv[])	{
 	    printf("rc=%d\n",rc);
 	    break;
     }
+
+    _nss_lcmapsd_config_free(&opts);
     return 0;
 }
 #endif

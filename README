@@ -1,0 +1,30 @@
+This software is designed for GNU/Linux with glibc 2.1 or later.
+
+Summary:      An NSS (System Databases and Name Service Switch) module using
+              LCMAPS
+Author:       Mischa Sall\'e, msalle (at) nikhef (dot) nl
+License:      Apache 2
+Dependencies: libcurl
+
+Description:  This module provides getpwnam functionality for grid-mapfile
+	      entries, using LCMAPS to resolve the mapping. It uses the lcmaps
+	      REST interface, see https://github.com/okoeroo/lcmaps-rest.
+	      It can be configured using a configfile, default
+	      ${sysconfdir}/nss_lcmapsd.conf
+	      Currently understood options (with defaults):
+		LCMAPSD_URL      http://localhost:8008/lcmaps/mapping/rest
+		LCMAPSD_TIMEOUT	 4
+	      To test functionality a standalone testtool is provided,
+	      nss_lcmapsd_test, which expects a single argument, the name to be
+	      looked up.
+		
+Notes:        For efficiency, add this module as last entry in
+              /etc/nsswitch.conf, e.g.
+	      ...
+	      passwd: files lcmapsd
+	      ...
+              It is possible to exhaust a gridmapdir by doing multiple lookups
+	      for different inputs. This module does not provide protection for
+	      that.
+
+

@@ -14,12 +14,19 @@
 #     Mischa Sall\'e <msalle@nikhef.nl>
 #
 
+AM_CPPFLAGS = -DNSS_LCMAPSD_CONF=\"@CONFIG_FILE@\"
+AM_CFLAGS = \
+    -Wall \
+    -Wuninitialized -Wbad-function-cast -Wcast-align -Wcast-qual \
+    -Wmissing-prototypes -Wpointer-arith -Wredundant-decls \
+    -Wshadow -Wstrict-prototypes -Wpointer-arith -Wno-long-long -Wundef
+
 # Library
 lib_LTLIBRARIES = libnss_lcmapsd.la
-libnss_lcmapsd_la_LDFLAGS = -version-info 2
+libnss_lcmapsd_la_LDFLAGS = -module -version-info 2:0:0
 libnss_lcmapsd_la_SOURCES = nss_lcmapsd.c nss_lcmapsd.h nss_lcmapsd_conf.c
 
 # Test program
-bin_PROGRAMS = nss_lcmapsd_test
+sbin_PROGRAMS = nss_lcmapsd_test
 nss_lcmapsd_test_CFLAGS = -DMAKE_A_OUT
 nss_lcmapsd_test_SOURCES = nss_lcmapsd.c nss_lcmapsd.h nss_lcmapsd_conf.c
