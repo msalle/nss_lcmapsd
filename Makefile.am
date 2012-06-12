@@ -21,6 +21,9 @@ AM_CFLAGS = \
     -Wmissing-prototypes -Wpointer-arith -Wredundant-decls \
     -Wshadow -Wstrict-prototypes -Wpointer-arith -Wno-long-long -Wundef
 
+EXTRA_DIST = LICENSE \
+	     bootstrap
+
 # Library
 lib_LTLIBRARIES = libnss_lcmapsd.la
 libnss_lcmapsd_la_LDFLAGS = -module -version-info 2:0:0
