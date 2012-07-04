@@ -15,12 +15,19 @@
 
 #include <json/json.h>
 
+/************************************************************************/
+/* TYPEDEFS                                                             */
+/************************************************************************/
 
 /* Used as buffer space by _curl_memwrite */
 struct MemoryStruct {
     char *memory;
     size_t size;
 };
+
+/************************************************************************/
+/* PRIVATE FUNCTIONS                                                    */
+/************************************************************************/
 
 /**
  * see cURL getinmemory.c example
@@ -77,21 +84,27 @@ static int _lcmapsd_parse_json(char *memory, uid_t *uid)    {
  */ 
 static enum nss_status
 _lcmapsd_curl(lcmapsd_opts_t *opts, const char *name, uid_t *uid)	{
-    CURL *curl_handle;
+    CURL *curl_handle=NULL;
     struct MemoryStruct chunk;
     char *extra_url="?format=json&subjectdn=";
     char *lcmapsd_url=NULL,*name_encoded=NULL;
-    int rc,len=strlen(extra_url);
+    int rc,len;
     long httpresp;
 
-    if (opts->lcmapsd_url==NULL) return NSS_STATUS_UNAVAIL;
+    if (opts->lcmapsd_url==NULL)
+	return NSS_STATUS_UNAVAIL;
+
+    /* No name -> not found */
+    if (name==NULL)
+	return NSS_STATUS_NOTFOUND;
+
+    /* init the curl session */
+    if (curl_global_init(CURL_GLOBAL_ALL)!=0 ||
+	(curl_handle = curl_easy_init())==NULL)
+	return NSS_STATUS_TRYAGAIN;
 
     /* Initialize size of chunk */
     chunk.size=0;
-
-    /* init the curl session */
-    curl_global_init(CURL_GLOBAL_ALL);
-    curl_handle = curl_easy_init();
 
     /* Do all memory operations, including conversion of name into url encoded
      * name */
@@ -100,7 +113,7 @@ _lcmapsd_curl(lcmapsd_opts_t *opts, const char *name, uid_t *uid)	{
 	rc=NSS_STATUS_TRYAGAIN;
 	goto _curl_cleanup;
     }
-    len+=strlen(opts->lcmapsd_url)+strlen(name_encoded)+1;
+    len=strlen(opts->lcmapsd_url)+strlen(extra_url)+strlen(name_encoded)+1;
     if ( (lcmapsd_url=(char*)malloc(len)) == NULL)  {
 	rc=NSS_STATUS_TRYAGAIN;
 	goto _curl_cleanup;
@@ -118,11 +131,12 @@ _lcmapsd_curl(lcmapsd_opts_t *opts, const char *name, uid_t *uid)	{
     curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, opts->lcmapsd_timeout);
 
     /* Do lookup */
-    curl_easy_perform(curl_handle);
-    curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &httpresp);
-
-    /* cleanup curl stuff */
-    curl_easy_cleanup(curl_handle);
+    if ( curl_easy_perform(curl_handle)!=0 ||
+         curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &httpresp)
+	    != CURLE_OK )   {
+	rc=NSS_STATUS_TRYAGAIN;
+	goto _curl_cleanup;
+    }
 
     /* Did we receive a proper answer? */
     if (httpresp==200)	{
@@ -146,16 +160,22 @@ _lcmapsd_curl(lcmapsd_opts_t *opts, const char *name, uid_t *uid)	{
     }
 
 _curl_cleanup:
+    /* cleanup curl stuff */
+    curl_easy_cleanup(curl_handle);
     /* Cleanup memory */
-    if (chunk.memory)	free(chunk.memory);
-    if (name_encoded)	free(name_encoded);
-    if (lcmapsd_url)	free(lcmapsd_url);
+    if (chunk.memory)   free(chunk.memory);
+    if (name_encoded)   free(name_encoded);
+    if (lcmapsd_url)    free(lcmapsd_url);
 
     /* we're done with libcurl, so clean it up */
     curl_global_cleanup();
 
     return rc;
 }
+
+/************************************************************************/
+/* PUBLIC FUNCTIONS                                                     */
+/************************************************************************/
 
 /**
  * Actual nss lookup function trying to do a mapping via a lcmapsd
