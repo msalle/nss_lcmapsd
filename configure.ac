@@ -36,7 +36,9 @@ AC_PROG_LIBTOOL
 
 AC_CHECK_LIB([curl],[curl_easy_init])
 
-AC_CHECK_HEADERS([nss.h])
+AC_CHECK_LIB([json],[json_object_object_get])
+
+AC_CHECK_HEADERS([curl/curl.h json/json.h nss.h])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_HEADERS([nss_lcmapsd_config.h])

@@ -13,7 +13,7 @@ Description:  This module provides getpwnam functionality for grid-mapfile
 	      ${sysconfdir}/nss_lcmapsd.conf
 	      Currently understood options (with defaults):
 		LCMAPSD_URL      http://localhost:8008/lcmaps/mapping/rest
-		LCMAPSD_TIMEOUT	 4
+		LCMAPSD_TIMEOUT	 1
 	      To test functionality a standalone testtool is provided,
 	      nss_lcmapsd_test, which expects a single argument, the name to be
 	      looked up.

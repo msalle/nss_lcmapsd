@@ -16,7 +16,7 @@
 typedef struct lcmapsd_opts_s	{
     char *lcmapsd_conffile;
     char *lcmapsd_url;
-    int lcmapsd_timeout;
+    long lcmapsd_timeout;
 } lcmapsd_opts_t;
 
 

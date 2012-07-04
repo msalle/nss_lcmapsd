@@ -13,6 +13,8 @@
 
 #include <curl/curl.h>
 
+#include <json/json.h>
+
 
 /* Used as buffer space by _curl_memwrite */
 struct MemoryStruct {
@@ -44,18 +46,27 @@ _curl_memwrite(void *contents, size_t size, size_t nmemb, void *userp) {
  * \return 1 when uid is found, otherwise 0
  */
 static int _lcmapsd_parse_json(char *memory, uid_t *uid)    {
-    char *pos=memory;
+    struct json_object *obj,*cred_obj;
+    int rc;
 
-    if ( (pos=strstr(pos,"\"posix\""))!=NULL &&
-	 (pos=strstr(pos,"{"))!=NULL &&
-	 (pos=strstr(pos,"\"uid\""))!=NULL &&
-	 (pos=strstr(pos,"{"))!=NULL &&
-	 (pos=strstr(pos,"\"id\""))!=NULL &&
-	 (pos=strstr(pos,":"))!=NULL &&
-	 sscanf(pos+1,"%d",uid)==1)
-	return 1;
-    else
-	return 0;
+    /* Find lcmaps/mapping/posix object */
+    if ( (obj=json_tokener_parse(memory)) &&
+         (cred_obj=json_object_object_get(obj, "lcmaps")) &&
+         (cred_obj=json_object_object_get(cred_obj, "mapping")) &&
+         (cred_obj=json_object_object_get(cred_obj, "posix")) &&
+	 (cred_obj=json_object_object_get(cred_obj, "uid")) &&
+	 (cred_obj=json_object_object_get(cred_obj, "id")) &&
+	 json_object_is_type(cred_obj,json_type_int) ) {
+	/* uid found and is integer */
+	*uid=json_object_get_int(cred_obj);
+	rc=1;
+    } else
+	rc=0;
+
+    /* Cleanup json data */
+    json_object_put(obj);
+
+    return rc;
 }
 
 /**
