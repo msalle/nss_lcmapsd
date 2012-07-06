@@ -4,7 +4,7 @@ Summary:      An NSS (System Databases and Name Service Switch) module using
               LCMAPS
 Author:       Mischa Sall\'e, msalle (at) nikhef (dot) nl
 License:      Apache 2
-Dependencies: libcurl
+Dependencies: libcurl, libjson (json-c)
 
 Description:  This module provides getpwnam functionality for grid-mapfile
 	      entries, using LCMAPS to resolve the mapping. It uses the lcmaps
